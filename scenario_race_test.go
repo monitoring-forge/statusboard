@@ -55,6 +55,10 @@ func clientDoRequest(testCtx context.Context, client *http.Client, path string, 
 	return client.Do(req)
 }
 
+func statusOKorNotModified(code int) bool {
+	return code == http.StatusOK || code == http.StatusNotModified
+}
+
 func clientRequestLoop(testCtx context.Context, id int, ts *httptest.Server, requestsPerClient int, reportErr func(error)) {
 	client := ts.Client()
 	for i := 0; i < requestsPerClient; i++ {
@@ -75,19 +79,24 @@ func clientRequestLoop(testCtx context.Context, id int, ts *httptest.Server, req
 			return
 		}
 
-		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNotModified {
+		if !statusOKorNotModified(resp.StatusCode) {
 			resp.Body.Close()
 			reportErr(fmt.Errorf("unexpected status %d for %s", resp.StatusCode, path))
 			return
 		}
 
-		if resp.StatusCode == http.StatusOK && resp.Header.Get("Last-Modified") == "" {
+		if resp.StatusCode == http.StatusNotModified {
+			resp.Body.Close()
+			continue
+		}
+
+		if resp.Header.Get("Last-Modified") == "" {
 			resp.Body.Close()
 			reportErr(fmt.Errorf("missing Last-Modified header for %s", path))
 			return
 		}
 
-		if path == "/_json" && resp.StatusCode == http.StatusOK {
+		if path == "/_json" {
 			payload := map[string]any{}
 			if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
 				resp.Body.Close()
