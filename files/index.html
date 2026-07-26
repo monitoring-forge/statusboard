@@ -91,24 +91,24 @@
                 <table class="table is-fullwidth is-hoverable is-narrow">
                     <thead>
                         <tr>
-                            <th></th>
+                            <th scope="row"></th>
                             {{ range $.Days }}
-                            <th>{{ . }}</td>
-                                {{ end }}
+                            <th scope="col">{{ . }}</th>
+                            {{ end }}
                         </tr>
                     </thead>
                     <tfoot>
                         <tr>
-                            <th></th>
+                            <th scope="row"></th>
                             {{ range $.Days }}
-                            <th>{{ . }}</td>
-                                {{ end }}
+                            <th scope="col">{{ . }}</th>
+                            {{ end }}
                         </tr>
                     </tfoot>
                     <tbody>
                         {{ range .Services }}
                         <tr>
-                            <th class="is-vcentered">{{ .Name }}</th>
+                            <th scope="row" class="is-vcentered">{{ .Name }}</th>
                             <td title='[{{ .LatestStatus }}] {{ .LatestStatusAt.Format "2006-01-02 15:04:05 MST" }}'
                                 class="is-vcentered">
                                 <span
