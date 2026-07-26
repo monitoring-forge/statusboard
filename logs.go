@@ -120,15 +120,10 @@ func (o *Opt) loadLog(ctx context.Context) {
 	days := make([]string, 0, 10)
 	days = append(days, o.config.LatestTimeRange.ShortString())
 
-	// initilize
-	for _, categeory := range o.config.Categories {
-		for _, service := range categeory.Services {
-			service.LatestStatus = NoDATA
-			service.LatestStatusAt = time.Now()
-			history := []*statusText{NoDATA, NoDATA, NoDATA, NoDATA, NoDATA, NoDATA, NoDATA}
-			service.StatusHistory = history
-		}
-	}
+	// initialize
+	o.initializeServices()
+
+	// process 7 days of logs
 	for i := 0; i < 7; i++ {
 		days = append(days, d.Format("01/02"))
 		lastUpdated, logs, latestLogs, err := o.loadServiceLog(ctx, d)
@@ -137,60 +132,88 @@ func (o *Opt) loadLog(ctx context.Context) {
 			slog.Warn("failed to loadlog", slog.Any("error", err))
 			continue
 		}
-		if i == 0 {
-			// latestをいれる
-			for _, categeory := range o.config.Categories {
-				for _, service := range categeory.Services {
-					ok, fail := o.countByService(latestLogs, service)
-					service.LatestStatusAt = lastUpdated
-					if ok == 0 && fail == 0 {
-						service.LatestStatus = NoDATA
-					} else if fail > 0 {
-						service.LatestStatus = Outage
-					} else {
-						service.LatestStatus = Operational
-					}
-				}
-			}
-		}
-		for _, categeory := range o.config.Categories {
-			for _, service := range categeory.Services {
-				ok, fail := o.countByService(logs, service)
-				service.LatestStatusAt = lastUpdated
-				if ok == 0 && fail == 0 {
-					service.StatusHistory[i] = NoDATA
-				} else if fail > 0 {
-					service.StatusHistory[i] = Outage
-				} else {
-					service.StatusHistory[i] = Operational
-				}
-			}
-		}
+		o.updateServiceStatuses(logs, latestLogs, lastUpdated, i == 0, i)
 	}
 
-	for _, categeory := range o.config.Categories {
-		ok := 0
-		fail := 0
-		nodata := 0
-		for _, service := range categeory.Services {
-			if service.LatestStatus.IsOperational() {
-				ok++
-			} else if service.LatestStatus.IsOutage() {
-				fail++
-			} else {
-				nodata++
-			}
-		}
-		categeory.LatestStatus = NoDATA
-		if fail == 0 && ok > 0 {
-			categeory.LatestStatus = Operational
-		} else if fail > 0 {
-			categeory.LatestStatus = Outage
-		}
-	}
+	o.updateCategoryStatuses()
 
 	o.config.Days = days
 	o.config.LastUpdatedAt = time.Now()
+}
+
+// initializeServices resets all services to their default state
+func (o *Opt) initializeServices() {
+	for _, category := range o.config.Categories {
+		for _, service := range category.Services {
+			service.LatestStatus = NoDATA
+			service.LatestStatusAt = time.Now()
+			service.StatusHistory = []*statusText{
+				NoDATA, NoDATA, NoDATA, NoDATA,
+				NoDATA, NoDATA, NoDATA,
+			}
+		}
+	}
+}
+
+// updateServiceStatuses calculates and updates status for all services based on logs
+func (o *Opt) updateServiceStatuses(
+	logs []*ServiceLog,
+	latestLogs []*ServiceLog,
+	lastUpdated time.Time,
+	isLatest bool,
+	dayIndex int,
+) {
+	for _, category := range o.config.Categories {
+		for _, service := range category.Services {
+			service.LatestStatusAt = lastUpdated
+
+			if isLatest {
+				ok, fail := o.countByService(latestLogs, service)
+				service.LatestStatus = o.calculateServiceStatus(ok, fail)
+			} else {
+				ok, fail := o.countByService(logs, service)
+				service.StatusHistory[dayIndex] = o.calculateServiceStatus(ok, fail)
+			}
+		}
+	}
+}
+
+// calculateServiceStatus returns the appropriate statusText based on ok and fail counts
+func (o *Opt) calculateServiceStatus(ok, fail int) *statusText {
+	if ok == 0 && fail == 0 {
+		return NoDATA
+	} else if fail > 0 {
+		return Outage
+	}
+	return Operational
+}
+
+// updateCategoryStatuses calculates category-level status from its services
+func (o *Opt) updateCategoryStatuses() {
+	for _, category := range o.config.Categories {
+		var operational, outage, noData int
+		for _, service := range category.Services {
+			switch {
+			case service.LatestStatus.IsOperational():
+				operational++
+			case service.LatestStatus.IsOutage():
+				outage++
+			default:
+				noData++
+			}
+		}
+		category.LatestStatus = o.calculateCategoryStatus(operational, outage)
+	}
+}
+
+// calculateCategoryStatus returns the appropriate category status
+func (o *Opt) calculateCategoryStatus(operational, outage int) *statusText {
+	if outage == 0 && operational > 0 {
+		return Operational
+	} else if outage > 0 {
+		return Outage
+	}
+	return NoDATA
 }
 
 func (o *Opt) renderStatusPage(ctx context.Context) error {
