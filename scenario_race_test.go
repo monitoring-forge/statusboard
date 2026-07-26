@@ -42,25 +42,55 @@ func writeLogAndRenderStatusPage(testCtx context.Context, workerIterations int, 
 	}
 }
 
-func clientDoRequest(testCtx context.Context, client *http.Client, path string, i int, ts *httptest.Server) (*http.Response, error) {
+func clientRequest(testCtx context.Context, ts *httptest.Server, id, i int) error {
+	path := "/_json"
+	if (id+i)%2 == 0 {
+		path = "/"
+	}
 
 	req, err := http.NewRequestWithContext(testCtx, http.MethodGet, ts.URL+path, nil)
 	if err != nil {
-		return nil, fmt.Errorf("new request failed: %w", err)
+		return fmt.Errorf("new request failed: %w", err)
 	}
 	if i%3 == 0 {
 		req.Header.Set("If-Modified-Since", time.Now().UTC().Format(http.TimeFormat))
 	}
 
-	return client.Do(req)
-}
+	resp, err := ts.Client().Do(req)
+	if err != nil {
+		return fmt.Errorf("http request failed: %w", err)
+	}
 
-func statusOKorNotModified(code int) bool {
-	return code == http.StatusOK || code == http.StatusNotModified
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNotModified {
+		resp.Body.Close()
+		return fmt.Errorf("unexpected status %d for %s", resp.StatusCode, path)
+	}
+
+	if resp.StatusCode == http.StatusNotModified {
+		resp.Body.Close()
+		return nil
+	}
+
+	if resp.Header.Get("Last-Modified") == "" {
+		resp.Body.Close()
+		return fmt.Errorf("missing Last-Modified header for %s", path)
+	}
+
+	if path == "/_json" {
+		payload := map[string]any{}
+		if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+			resp.Body.Close()
+			return fmt.Errorf("json decode failed: %w", err)
+		}
+	}
+
+	io.Copy(io.Discard, resp.Body)
+	resp.Body.Close()
+
+	return nil
 }
 
 func clientRequestLoop(testCtx context.Context, id int, ts *httptest.Server, requestsPerClient int, reportErr func(error)) {
-	client := ts.Client()
 	for i := 0; i < requestsPerClient; i++ {
 		select {
 		case <-testCtx.Done():
@@ -68,47 +98,11 @@ func clientRequestLoop(testCtx context.Context, id int, ts *httptest.Server, req
 		default:
 		}
 
-		path := "/_json"
-		if (id+i)%2 == 0 {
-			path = "/"
-		}
-
-		resp, err := clientDoRequest(testCtx, client, path, i, ts)
-		if err != nil {
-			reportErr(fmt.Errorf("http request failed: %w", err))
+		if err := clientRequest(testCtx, ts, id, i); err != nil {
+			reportErr(err)
 			return
 		}
-
-		if !statusOKorNotModified(resp.StatusCode) {
-			resp.Body.Close()
-			reportErr(fmt.Errorf("unexpected status %d for %s", resp.StatusCode, path))
-			return
-		}
-
-		if resp.StatusCode == http.StatusNotModified {
-			resp.Body.Close()
-			continue
-		}
-
-		if resp.Header.Get("Last-Modified") == "" {
-			resp.Body.Close()
-			reportErr(fmt.Errorf("missing Last-Modified header for %s", path))
-			return
-		}
-
-		if path == "/_json" {
-			payload := map[string]any{}
-			if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
-				resp.Body.Close()
-				reportErr(fmt.Errorf("json decode failed: %w", err))
-				return
-			}
-		}
-
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
 	}
-
 }
 
 func TestScenario_ConcurrentWorkerAndHTTPHandlers(t *testing.T) {
