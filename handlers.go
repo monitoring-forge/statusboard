@@ -98,7 +98,7 @@ func (o *Opt) ifModifiedSince(r *http.Request) bool {
 		return true
 	}
 	lm := o.config.LastUpdatedAt.Truncate(time.Second)
-	if ret := lm.Compare(t); ret <= 0 {
+	if lm.Compare(t) <= 0 {
 		return false
 	}
 	return true

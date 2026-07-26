@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
@@ -84,5 +85,36 @@ func TestRequestLogger_SkipperSkips(t *testing.T) {
 	out := strings.TrimSpace(buf.String())
 	if out != "" {
 		t.Fatalf("log should be empty when skipped: %q", out)
+	}
+}
+
+func TestIfModifiedSince(t *testing.T) {
+	opt := newTestOpt(t)
+	now := time.Now()
+	opt.config.LastUpdatedAt = now
+
+	tests := []struct {
+		name       string
+		ifModified string
+		want       bool
+	}{
+		{"no header", "", true},
+		{"invalid header", "invalid-date", true},
+		{"older date", now.UTC().Add(-1 * time.Hour).Format(http.TimeFormat), true},
+		{"same date", now.UTC().Format(http.TimeFormat), false},
+		{"newer date", now.UTC().Add(1 * time.Hour).Format(http.TimeFormat), false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "http://example.com/status.json", nil)
+			if tt.ifModified != "" {
+				req.Header.Set("If-Modified-Since", tt.ifModified)
+			}
+			got := opt.ifModifiedSince(req)
+			if got != tt.want {
+				t.Errorf("%s: ifModifiedSince() = %v, want %v", tt.name, got, tt.want)
+			}
+		})
 	}
 }
