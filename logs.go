@@ -86,7 +86,7 @@ func (o *Opt) loadServiceLog(_ context.Context, d time.Time) (time.Time, []*Serv
 	return lastUpdated, logs, latestLogs, nil
 }
 
-func sameCommand(c []string, s []string) bool {
+func sameCommand(c, s []string) bool {
 	if len(c) != len(s) {
 		return false
 	}
