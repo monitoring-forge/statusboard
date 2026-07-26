@@ -42,6 +42,19 @@ func writeLogAndRenderStatusPage(testCtx context.Context, workerIterations int, 
 	}
 }
 
+func clientDoRequest(testCtx context.Context, client *http.Client, path string, i int, ts *httptest.Server) (*http.Response, error) {
+
+	req, err := http.NewRequestWithContext(testCtx, http.MethodGet, ts.URL+path, nil)
+	if err != nil {
+		return nil, fmt.Errorf("new request failed: %w", err)
+	}
+	if i%3 == 0 {
+		req.Header.Set("If-Modified-Since", time.Now().UTC().Format(http.TimeFormat))
+	}
+
+	return client.Do(req)
+}
+
 func clientRequestLoop(testCtx context.Context, id int, ts *httptest.Server, requestsPerClient int, reportErr func(error)) {
 	client := ts.Client()
 	for i := 0; i < requestsPerClient; i++ {
@@ -50,23 +63,15 @@ func clientRequestLoop(testCtx context.Context, id int, ts *httptest.Server, req
 			return
 		default:
 		}
+
 		path := "/_json"
 		if (id+i)%2 == 0 {
 			path = "/"
 		}
 
-		req, err := http.NewRequestWithContext(testCtx, http.MethodGet, ts.URL+path, nil)
+		resp, err := clientDoRequest(testCtx, client, path, i, ts)
 		if err != nil {
-			reportErr(fmt.Errorf("new request failed: %w", err))
-			return
-		}
-		if i%3 == 0 {
-			req.Header.Set("If-Modified-Since", time.Now().UTC().Format(http.TimeFormat))
-		}
-
-		resp, err := client.Do(req)
-		if err != nil {
-			reportErr(fmt.Errorf("http do failed: %w", err))
+			reportErr(fmt.Errorf("http request failed: %w", err))
 			return
 		}
 
@@ -89,18 +94,10 @@ func clientRequestLoop(testCtx context.Context, id int, ts *httptest.Server, req
 				reportErr(fmt.Errorf("json decode failed: %w", err))
 				return
 			}
-		} else {
-			if _, err := io.Copy(io.Discard, resp.Body); err != nil {
-				resp.Body.Close()
-				reportErr(fmt.Errorf("response read failed: %w", err))
-				return
-			}
 		}
 
-		if err := resp.Body.Close(); err != nil {
-			reportErr(fmt.Errorf("response close failed: %w", err))
-			return
-		}
+		io.Copy(io.Discard, resp.Body)
+		resp.Body.Close()
 	}
 
 }

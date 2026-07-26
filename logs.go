@@ -191,7 +191,7 @@ func (o *Opt) calculateServiceStatus(ok, fail int) *statusText {
 // updateCategoryStatuses calculates category-level status from its services
 func (o *Opt) updateCategoryStatuses() {
 	for _, category := range o.config.Categories {
-		var operational, outage, noData int
+		var operational, outage int
 		for _, service := range category.Services {
 			switch {
 			case service.LatestStatus.IsOperational():
@@ -199,7 +199,7 @@ func (o *Opt) updateCategoryStatuses() {
 			case service.LatestStatus.IsOutage():
 				outage++
 			default:
-				noData++
+				// NoDATA, do nothing
 			}
 		}
 		category.LatestStatus = o.calculateCategoryStatus(operational, outage)
