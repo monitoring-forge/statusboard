@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+
+	// To use go:embed
 	_ "embed"
 	"fmt"
 	"log/slog"
