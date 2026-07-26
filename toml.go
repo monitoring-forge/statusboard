@@ -143,7 +143,10 @@ func durationDefault(d *duration, defaultValue string) {
 }
 
 func markdownDefault(m **markdown, defaultValue string) {
-	if m == nil || *m == nil || (*m).IsEmpty() {
+	if m == nil {
+		return
+	}
+	if *m == nil || (*m).IsEmpty() {
 		*m = MustMarkdown(defaultValue)
 	}
 }
