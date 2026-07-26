@@ -1,5 +1,6 @@
 GIT_VER := $(shell git describe --tags)
-LDFLAGS=-ldflags "-w -s -X main.version=${GIT_VER}"
+GITCOMMIT?=$(shell git describe --dirty --always)
+LDFLAGS=-ldflags "-w -s -X main.version=${VERSION} -X main.commit=${GITCOMMIT}"
 
 all: statusboard
 
