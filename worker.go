@@ -50,53 +50,57 @@ type resultMessage struct {
 	error   error
 }
 
+func (o *Opt) execServiceCommandWithTimeout(ctx context.Context, service *Service) {
+	ctx, cancel := context.WithTimeout(ctx, o.config.WorkerTimeout.Duration)
+	ch := make(chan resultMessage, 1)
+	go func() {
+		var e error
+		status, message, e := o.execServiceCommandWithRetry(ctx, service)
+		ch <- resultMessage{
+			status:  status,
+			message: message,
+			error:   e,
+		}
+	}()
+	var msg resultMessage
+	select {
+	case msg = <-ch:
+		// nothing
+	case <-ctx.Done():
+		msg = resultMessage{
+			status:  ErrorStatusCode,
+			message: "",
+			error:   fmt.Errorf("command timeout"),
+		}
+	}
+	if msg.error != nil {
+		if msg.message == "" {
+			msg.message = msg.error.Error()
+		}
+	}
+	servicelog := &ServiceLog{
+		Time:         time.Now(),
+		CategoryName: service.categoryName,
+		Name:         service.Name,
+		Command:      service.Command,
+		Status:       msg.status,
+		Message:      msg.message,
+	}
+	err := o.appendServiceLog(servicelog)
+	if err != nil {
+		slog.Warn("error in appendlog", slog.Any("error", err))
+	}
+	defer cancel()
+}
+
 func (o *Opt) execWorker(ctx context.Context) error {
 	pool := workerpool.New(o.config.NumOfWorker)
 
-	for _, categeory := range o.config.Categories {
-		for _, s := range categeory.Services {
+	for _, category := range o.config.Categories {
+		for _, s := range category.Services {
 			service := s
 			pool.Submit(func() {
-				ctx, cancel := context.WithTimeout(ctx, o.config.WorkerTimeout.Duration)
-				ch := make(chan resultMessage, 1)
-				go func() {
-					var e error
-					status, message, e := o.execServiceCommandWithRetry(ctx, service)
-					ch <- resultMessage{
-						status:  status,
-						message: message,
-						error:   e,
-					}
-				}()
-				var msg resultMessage
-				select {
-				case msg = <-ch:
-					// nothing
-				case <-ctx.Done():
-					msg = resultMessage{
-						status:  ErrorStatusCode,
-						message: "",
-						error:   fmt.Errorf("command timeout"),
-					}
-				}
-				if msg.error != nil {
-					if msg.message == "" {
-						msg.message = msg.error.Error()
-					}
-				}
-				servicelog := &ServiceLog{
-					Time:         time.Now(),
-					CategoryName: service.categoryName,
-					Name:         service.Name,
-					Command:      service.Command,
-					Status:       msg.status,
-					Message:      msg.message,
-				}
-				err := o.appendServiceLog(servicelog)
-				if err != nil {
-					slog.Warn("error in appendlog", slog.Any("error", err))
-				}
-				defer cancel()
+				o.execServiceCommandWithTimeout(ctx, service)
 			})
 		}
 	}

@@ -3,9 +3,10 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func writeTempToml(t *testing.T, content string) string {
@@ -40,68 +41,39 @@ hide = false
 `
 	path := writeTempToml(t, tomlContent)
 	conf, err := loadToml(path)
-	if err != nil {
-		t.Fatalf("loadToml failed: %v", err)
-	}
-	if conf.Lang != "ja" {
-		t.Errorf("Lang = %q, want %q", conf.Lang, "ja")
-	}
-	if conf.Title != "Test Board" {
-		t.Errorf("Title = %q, want %q", conf.Title, "Test Board")
-	}
-	if conf.Favicon != "/favicon.ico" {
-		t.Errorf("Favicon = %q, want %q", conf.Favicon, "/favicon.ico")
-	}
-	if conf.WorkerInterval.Duration != 2*time.Minute {
-		t.Errorf("WorkerInterval = %v, want 2m", conf.WorkerInterval)
-	}
-	if conf.WorkerTimeout.Duration != 10*time.Second {
-		t.Errorf("WorkerTimeout = %v, want 10s", conf.WorkerTimeout)
-	}
-	if conf.NumOfWorker != 2 {
-		t.Errorf("NumOfWorker = %d, want 2", conf.NumOfWorker)
-	}
-	if conf.MaxCheckAttempts != 5 {
-		t.Errorf("MaxCheckAttempts = %d, want 5", conf.MaxCheckAttempts)
-	}
-	if conf.RetryInterval.Duration != 3*time.Second {
-		t.Errorf("RetryInterval = %v, want 3s", conf.RetryInterval)
-	}
-	if conf.LatestTimeRange.Duration != 2*time.Hour {
-		t.Errorf("LatestTimeRange = %v, want 2h", conf.LatestTimeRange)
-	}
-	if len(conf.Categories) != 1 {
-		t.Fatalf("Categories len = %d, want 1", len(conf.Categories))
-	}
+	assert.NoError(t, err)
+
+	// Basic config fields
+	assert.Equal(t, "ja", conf.Lang)
+	assert.Equal(t, "Test Board", conf.Title)
+	assert.Equal(t, "/favicon.ico", conf.Favicon)
+
+	// Worker settings
+	assert.Equal(t, 2*time.Minute, conf.WorkerInterval.Duration)
+	assert.Equal(t, 10*time.Second, conf.WorkerTimeout.Duration)
+	assert.Equal(t, 2, conf.NumOfWorker)
+	assert.Equal(t, 5, conf.MaxCheckAttempts)
+	assert.Equal(t, 3*time.Second, conf.RetryInterval.Duration)
+	assert.Equal(t, 2*time.Hour, conf.LatestTimeRange.Duration)
+
+	// Category fields
+	assert.Equal(t, 1, len(conf.Categories))
 	cat := conf.Categories[0]
-	if cat.Name != "Web" {
-		t.Errorf("Category.Name = %q, want %q", cat.Name, "Web")
-	}
-	if cat.Comment != "Web services" {
-		t.Errorf("Category.Comment = %q, want %q", cat.Comment, "Web services")
-	}
-	if cat.Hide != false {
-		t.Errorf("Category.Hide = %v, want false", cat.Hide)
-	}
-	if len(cat.Services) != 1 {
-		t.Fatalf("Services len = %d, want 1", len(cat.Services))
-	}
+	assert.Equal(t, "Web", cat.Name)
+	assert.Equal(t, "Web services", cat.Comment)
+	assert.False(t, cat.Hide)
+
+	// Service fields
+	assert.Equal(t, 1, len(cat.Services))
 	svc := cat.Services[0]
-	if svc.Name != "Google" {
-		t.Errorf("Service.Name = %q, want %q", svc.Name, "Google")
-	}
-	if svc.categoryName != "Web" {
-		t.Errorf("Service.categoryName = %q, want %q", svc.categoryName, "Web")
-	}
-	if len(svc.Command) != 2 || svc.Command[0] != "ping" || svc.Command[1] != "google.com" {
-		t.Errorf("Service.Command = %v, want [ping google.com]", svc.Command)
-	}
-	if conf.PoweredBy == nil || !strings.Contains(conf.PoweredBy.html, "Powered by statusboard") {
-		t.Errorf("PoweredBy = %v, want contains 'Powered by statusboard'", conf.PoweredBy)
-	}
-	if conf.LastUpdatedAt.IsZero() {
-		t.Errorf("LastUpdatedAt should be set")
-	}
+	assert.Equal(t, "Google", svc.Name)
+	assert.Equal(t, "Web", svc.categoryName)
+	assert.Equal(t, []string{"ping", "google.com"}, svc.Command)
+
+	// Generated fields
+	assert.NotNil(t, conf.PoweredBy)
+	assert.Contains(t, conf.PoweredBy.html, "Powered by statusboard")
+	assert.False(t, conf.LastUpdatedAt.IsZero())
 }
 
 func TestLoadToml_Defaults(t *testing.T) {
@@ -116,30 +88,17 @@ comment = "C"
 `
 	path := writeTempToml(t, tomlContent)
 	conf, err := loadToml(path)
-	if err != nil {
-		t.Fatalf("loadToml failed: %v", err)
-	}
-	if conf.NumOfWorker != 4 {
-		t.Errorf("NumOfWorker = %d, want 4", conf.NumOfWorker)
-	}
-	if conf.WorkerInterval.Duration != 5*time.Minute {
-		t.Errorf("WorkerInterval = %v, want 5m", conf.WorkerInterval)
-	}
-	if conf.WorkerTimeout.Duration != 30*time.Second {
-		t.Errorf("WorkerTimeout = %v, want 30s", conf.WorkerTimeout)
-	}
-	if conf.LatestTimeRange.Duration != 1*time.Hour {
-		t.Errorf("LatestTimeRange = %v, want 1h", conf.LatestTimeRange)
-	}
-	if conf.MaxCheckAttempts != 3 {
-		t.Errorf("MaxCheckAttempts = %d, want 3", conf.MaxCheckAttempts)
-	}
-	if conf.RetryInterval.Duration != 5*time.Second {
-		t.Errorf("RetryInterval = %v, want 5s", conf.RetryInterval)
-	}
-	if conf.PoweredBy == nil || !strings.Contains(conf.PoweredBy.html, "Powered by statusboard") {
-		t.Errorf("PoweredBy = %v, want contains 'Powered by statusboard'", conf.PoweredBy)
-	}
+	assert.NoError(t, err)
+
+	assert.Equal(t, 4, conf.NumOfWorker)
+	assert.Equal(t, 5*time.Minute, conf.WorkerInterval.Duration)
+	assert.Equal(t, 30*time.Second, conf.WorkerTimeout.Duration)
+	assert.Equal(t, 1*time.Hour, conf.LatestTimeRange.Duration)
+	assert.Equal(t, 3, conf.MaxCheckAttempts)
+	assert.Equal(t, 5*time.Second, conf.RetryInterval.Duration)
+
+	assert.NotNil(t, conf.PoweredBy)
+	assert.Contains(t, conf.PoweredBy.html, "Powered by statusboard")
 }
 
 func TestLoadToml_FileNotFound(t *testing.T) {

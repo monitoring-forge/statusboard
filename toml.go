@@ -136,6 +136,27 @@ type ServiceLog struct {
 	Message      string    `json:"message"`
 }
 
+func durationDefault(d *duration, defaultValue string) {
+	if d.IsZero() {
+		*d = MustDuration(defaultValue)
+	}
+}
+
+func markdownDefault(m **markdown, defaultValue string) {
+	if m == nil {
+		return
+	}
+	if *m == nil || (*m).IsEmpty() {
+		*m = MustMarkdown(defaultValue)
+	}
+}
+
+func stringDefault(s *string, defaultValue string) {
+	if s == nil || *s == "" {
+		*s = defaultValue
+	}
+}
+
 func loadToml(path string) (*Config, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -160,46 +181,27 @@ func loadToml(path string) (*Config, error) {
 	if conf.NumOfWorker == 0 {
 		conf.NumOfWorker = 4
 	}
-	if conf.WorkerInterval.IsZero() {
-		conf.WorkerInterval = MustDuration("5m")
-	}
-	if conf.WorkerTimeout.IsZero() {
-		conf.WorkerTimeout = MustDuration("30s")
-	}
-	if conf.LatestTimeRange.IsZero() {
-		conf.LatestTimeRange = MustDuration("1h")
-	}
 
 	if conf.MaxCheckAttempts == 0 {
 		conf.MaxCheckAttempts = 3
 	}
-	if conf.RetryInterval.IsZero() {
-		conf.RetryInterval = MustDuration("5s")
-	}
-	if conf.Lang == "" {
-		conf.Lang = "ja"
-	}
-	if conf.Title == "" {
-		conf.Title = "Status Board"
-	}
-	if conf.NavTitle == nil || conf.NavTitle.IsEmpty() {
-		conf.NavTitle = MustMarkdown("Status Board")
-	}
-	if conf.NavButtonName == "" {
-		conf.NavButtonName = "HOME"
-	}
-	if conf.NavButtonLink == "" {
-		conf.NavButtonLink = "/"
-	}
-	if conf.HeaderMessage == nil || conf.HeaderMessage.IsEmpty() {
-		conf.HeaderMessage = MustMarkdown("")
-	}
-	if conf.FooterMessage == nil || conf.FooterMessage.IsEmpty() {
-		conf.FooterMessage = MustMarkdown("")
-	}
-	if conf.PoweredBy == nil || conf.PoweredBy.IsEmpty() {
-		conf.PoweredBy = MustMarkdown("Powered by statusboard.")
-	}
+
+	durationDefault(&conf.WorkerInterval, "5m")
+	durationDefault(&conf.WorkerTimeout, "30s")
+	durationDefault(&conf.LatestTimeRange, "1h")
+	durationDefault(&conf.RetryInterval, "5s")
+
+	stringDefault(&conf.Lang, "ja")
+	stringDefault(&conf.Title, "Status Board")
+	stringDefault(&conf.Favicon, "/favicon.ico")
+	stringDefault(&conf.NavButtonName, "HOME")
+	stringDefault(&conf.NavButtonLink, "/")
+
+	markdownDefault(&conf.NavTitle, "Status Board")
+	markdownDefault(&conf.HeaderMessage, "")
+	markdownDefault(&conf.FooterMessage, "")
+	markdownDefault(&conf.PoweredBy, "Powered by statusboard.")
+
 	conf.LastUpdatedAt = time.Now()
 
 	return &conf, nil
