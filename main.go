@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"sync"
 	"syscall"
@@ -16,6 +17,12 @@ import (
 )
 
 var version string
+var commit string
+
+const UNKNOWN = 3
+const CRITICAL = 2
+const WARNING = 1
+const OK = 0
 
 type Opt struct {
 	Listen   string `short:"l" long:"listen" default:":8080" description:"address:port to bind"`
@@ -26,16 +33,6 @@ type Opt struct {
 	config   *Config
 	htmlBlob []byte
 	rwlock   sync.RWMutex
-}
-
-func printVersion() {
-	fmt.Printf(`%s %s
-Compiler: %s %s
-`,
-		os.Args[0],
-		version,
-		runtime.Compiler,
-		runtime.Version())
 }
 
 type statusText struct {
@@ -71,37 +68,51 @@ func _main() int {
 	psr := flags.NewParser(opt, flags.HelpFlag|flags.PassDoubleDash)
 	_, err := psr.Parse()
 	if opt.Version {
-		printVersion()
-		return 0
+		if commit == "" {
+			commit = "dev"
+		}
+		fmt.Printf(
+			"%s-%s\n%s/%s, %s, %s\n",
+			filepath.Base(os.Args[0]),
+			version,
+			runtime.GOOS,
+			runtime.GOARCH,
+			runtime.Version(),
+			commit)
+		return OK
+	}
+	if err != nil && flags.WroteHelp(err) {
+		fmt.Fprintf(os.Stdout, "%v\n", err)
+		return OK
 	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
-		return 1
+		return UNKNOWN
 	}
 	conf, err := loadToml(opt.Toml)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
-		return 1
+		return CRITICAL
 	}
 	opt.config = conf
 
 	if opt.Check {
 		fmt.Fprint(os.Stdout, "syntax OK\n")
-		return 0
+		return OK
 	}
 
 	// check open file in data dir
 	err = opt.createServiceLog()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
-		return 1
+		return CRITICAL
 	}
 
 	// render html
 	err = opt.renderStatusPage(context.Background())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
-		return 1
+		return CRITICAL
 	}
 
 	// run
@@ -118,10 +129,10 @@ func _main() int {
 	if err := g.Wait(); err != nil {
 		if !errors.Is(err, context.Canceled) {
 			slog.Warn("error in service", slog.Any("error", err))
-			return 1
+			return CRITICAL
 		}
 	}
-	return 0
+	return OK
 }
 
 func main() {
