@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.3.7](https://github.com/monitoring-forge/statusboard/compare/v0.3.6...v0.3.7) - 2026-08-05
+
+- ci: bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/123
+- go: bump github.com/labstack/echo/v5 from 5.3.0 to 5.3.1 in the dependencies group by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/122
+- Sync files with `monitoring-forge/github-common` by @monitoring-forge-files-sync-action[bot] in https://github.com/monitoring-forge/statusboard/pull/125
+- go: bump github.com/yuin/goldmark from 1.8.4 to 1.8.5 in the dependencies group by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/126
+
 ## [v0.3.6](https://github.com/monitoring-forge/statusboard/compare/v0.3.5...v0.3.6) - 2026-07-27
 
 - go: bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/116
