@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.3.7](https://github.com/monitoring-forge/statusboard/compare/v0.3.6...v0.3.7) - 2026-09-26
+
+- ci: bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/123
+- go: bump github.com/labstack/echo/v5 from 5.3.0 to 5.3.1 in the dependencies group by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/122
+- Sync files with `monitoring-forge/github-common` by @monitoring-forge-files-sync-action[bot] in https://github.com/monitoring-forge/statusboard/pull/125
+- go: bump github.com/yuin/goldmark from 1.8.4 to 1.8.5 in the dependencies group by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/126
+- Sync files with `monitoring-forge/github-common` by @monitoring-forge-files-sync-action[bot] in https://github.com/monitoring-forge/statusboard/pull/127
+- go: bump the dependencies group across 1 directory with 5 updates by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/132
+- ci: bump Songmu/tagpr from 1.20.1 to 1.20.3 in the dependencies group across 1 directory by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/133
+
 ## [v0.3.6](https://github.com/monitoring-forge/statusboard/compare/v0.3.5...v0.3.6) - 2026-07-27
 
 - go: bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/116
