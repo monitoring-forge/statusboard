@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.3.8](https://github.com/monitoring-forge/statusboard/compare/v0.3.7...v0.3.8) - 2026-10-09
+
+- Sync files with `monitoring-forge/github-common` by @monitoring-forge-files-sync-action[bot] in https://github.com/monitoring-forge/statusboard/pull/137
+
 ## [v0.3.7](https://github.com/monitoring-forge/statusboard/compare/v0.3.6...v0.3.7) - 2026-10-07
 
 - ci: bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/123
