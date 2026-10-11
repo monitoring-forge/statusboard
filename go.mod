@@ -16,10 +16,10 @@ require (
 
 require (
 	github.com/gammazero/workerpool v1.2.1
-	github.com/goccy/go-json v0.11.1
+	github.com/goccy/go-json v0.11.2
 	github.com/labstack/echo/v5 v5.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/yuin/goldmark v1.8.6
-	golang.org/x/sync v0.23.0
+	golang.org/x/sync v0.24.0
 	golang.org/x/sys v0.48.0 // indirect
 )
