@@ -14,7 +14,7 @@ jobs:
         env:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: Songmu/tagpr@e1250d6c84e4425db82b5e90549d62dfe23e9ebe # v1
+      - uses: Songmu/tagpr@047aec4b6c0ce166f52958b5a97f5a3d927fd65b # v1
         id: tagpr
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
