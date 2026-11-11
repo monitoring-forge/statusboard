@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.3.8](https://github.com/monitoring-forge/statusboard/compare/v0.3.7...v0.3.8) - 2026-11-11
+
+- Sync files with `monitoring-forge/github-common` by @monitoring-forge-files-sync-action[bot] in https://github.com/monitoring-forge/statusboard/pull/137
+- go: bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/139
+- ci: bump Songmu/tagpr from 1.21.1 to 1.21.2 in the tagpr group by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/140
+- ci: bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/143
+- ci: bump Songmu/tagpr from 1.21.2 to 1.21.3 in the tagpr group by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/145
+- Sync files with `monitoring-forge/github-common` by @monitoring-forge-files-sync-action[bot] in https://github.com/monitoring-forge/statusboard/pull/144
+- go: bump the dependencies group across 1 directory with 3 updates by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/142
+- ci: bump Songmu/tagpr from 1.21.3 to 1.21.4 in the tagpr group by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/147
+- go: bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/146
+- ci: bump Songmu/tagpr from 1.21.4 to 1.22.0 in the tagpr group by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/149
+- go: bump the dependencies group with 5 updates by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/148
+
 ## [v0.3.7](https://github.com/monitoring-forge/statusboard/compare/v0.3.6...v0.3.7) - 2026-10-07
 
 - ci: bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/123
