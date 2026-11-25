@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.3.9](https://github.com/monitoring-forge/statusboard/compare/v0.3.8...v0.3.9) - 2026-11-25
+
+- ci: bump actions/setup-go from 7.0.0 to 7.1.0 in the dependencies group by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/152
+- go: bump the dependencies group across 1 directory with 2 updates by @dependabot[bot] in https://github.com/monitoring-forge/statusboard/pull/151
+
 ## [v0.3.8](https://github.com/monitoring-forge/statusboard/compare/v0.3.7...v0.3.8) - 2026-11-11
 
 - Sync files with `monitoring-forge/github-common` by @monitoring-forge-files-sync-action[bot] in https://github.com/monitoring-forge/statusboard/pull/137
