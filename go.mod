@@ -17,9 +17,9 @@ require (
 require (
 	github.com/gammazero/workerpool v1.3.0
 	github.com/goccy/go-json v0.12.0
-	github.com/labstack/echo/v5 v5.4.4
+	github.com/labstack/echo/v5 v5.4.6
 	github.com/pkg/errors v0.9.1
 	github.com/yuin/goldmark v1.8.7
 	golang.org/x/sync v0.25.0
-	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 )
